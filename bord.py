@@ -60,6 +60,10 @@ def download_formulas(package_dictionaries, output_dir):
         name = package_dictionary['name']
         url = package_dictionary['url']
 
+        # We don't want a GitHub html, we want the raw file
+        if "github.com" in url:
+            url = url.replace("blob", "raw")
+
         print("Downloading formula for {}.".format(name))
         request = requests.get(url)
         file_name = "{}.rb".format(name)
