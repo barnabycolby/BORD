@@ -9,19 +9,31 @@ def get_dependency_list(package):
     url = "http://formulae.brew.sh/formula/{}".format(package)
     page = requests.get(url)
     tree = html.fromstring(page.content)
-    return tree.xpath("//div[@id='deps']//a[@class='formula']/text()")
+
+    package_name = package
+    package_deps = tree.xpath("//div[@id='deps']//a[@class='formula']/text()")
+    package_url = tree.xpath("//a[text()='Formula code']/@href")
+
+    return { 'name': package_name, 'url': package_url, 'deps': package_deps }
+
+def package_in_dictionaries(package, dictionaries):
+    for dictionary in dictionaries:
+        if dictionary['name'] == package:
+            return True
+
+    return False
 
 def get_full_dependency_list(package):
-    full_deps = []
-    queue = [package]
+    full_deps = [] # List of package dictionaries
+    queue = [package] # List of package names
 
     while len(queue) > 0:
         subpackage = queue.pop()
-        deps = get_dependency_list(subpackage)
-        full_deps.append(subpackage)
+        subpackage_dictionary = get_dependency_list(subpackage)
+        full_deps.append(subpackage_dictionary)
 
-        for dep in deps:
-            if dep not in full_deps and dep not in queue:
+        for dep in subpackage_dictionary['deps']:
+            if not package_in_dictionaries(dep, full_deps) and dep not in queue:
                 queue.append(dep)
 
     return full_deps
