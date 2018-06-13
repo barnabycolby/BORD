@@ -87,7 +87,6 @@ def main():
     package_name = sys.argv[1]
     package = { 'name': package_name }
     dependencies = get_full_dependency_list(package)
-    print("DEPENDENCIES: {}".format(dependencies))
 
     if not os.path.exists(package_name):
         os.makedirs(package_name)
