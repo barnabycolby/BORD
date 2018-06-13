@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-from lxml import html
-
 import json
 import os
 import requests
@@ -49,22 +47,6 @@ def get_full_dependency_list(package):
                 queue.append(dep)
 
     return full_deps
-
-def download_formulas(package_dictionaries, output_dir):
-    for package_dictionary in package_dictionaries:
-        name = package_dictionary['name']
-        url = package_dictionary['url']
-
-        # We don't want a GitHub html, we want the raw file
-        if "github.com" in url:
-            url = url.replace("blob", "raw")
-
-        print("Downloading formula for {}.".format(name))
-        request = requests.get(url)
-        file_name = "{}.rb".format(name)
-        file_path = os.path.join(output_dir, file_name)
-        with open(file_path, "wb") as output_file:
-            output_file.write(request.content)
 
 def download_bottles(package_dictionaries, output_dir):
     for package_dictionary in package_dictionaries:
