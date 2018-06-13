@@ -1,34 +1,32 @@
 #!/usr/bin/env python3
 from lxml import html
 
+import json
 import os
 import requests
 import sys
 
-BASE_FORMULA_URL = "http://formulae.brew.sh"
+BASE_FORMULA_API_URL = "http://formulae.brew.sh/api/formula"
 BASE_BOTTLE_URL = "https://bintray.com/homebrew/bottles/download_file?file_path="
 OS = "high_sierra"
 
 def get_dependency_list(package):
     package_name = package['name']
     print("Getting dependencies of {}.".format(package_name))
-    package_url = package['url']
-    page = requests.get(package_url)
-    tree = html.fromstring(page.content)
+    package_url = "{}/{}.json".format(BASE_FORMULA_API_URL, package_name)
+    package_json_string = requests.get(package_url).content
+    package_json = json.loads(package_json_string)
 
-    package_version = tree.xpath("//table[@class='versions']//strong[@class='version']/text()")[0]
+    package_version = package_json["versions"]["stable"]
 
     # Parse the dependencies and their urls
     package_deps = []
-    package_deps_nodes = tree.xpath("//div[@id='deps']//a[@class='formula']")
-    for node in package_deps_nodes:
-        dep_name = node.xpath("text()")[0]
-        dep_relative_url = node.xpath("@href")[0]
-        dep_url = "{}{}".format(BASE_FORMULA_URL, dep_relative_url)
-        package_dep = { 'name': dep_name, 'url': dep_url }
+    package_deps_names = package_json["dependencies"]
+    for dep_name in package_deps_names:
+        package_dep = { 'name': dep_name }
         package_deps.append(package_dep)
     
-    return { 'name': package_name, 'url': package_url, 'deps': package_deps, 'version': package_version }
+    return { 'name': package_name, 'deps': package_deps, 'version': package_version }
 
 def package_in_dictionaries(package, dictionaries):
     for dictionary in dictionaries:
@@ -87,9 +85,9 @@ def main():
         sys.exit(1)
 
     package_name = sys.argv[1]
-    package_url = "{}/formula/{}".format(BASE_FORMULA_URL, package_name)
-    package = { 'name': package_name, 'url': package_url }
+    package = { 'name': package_name }
     dependencies = get_full_dependency_list(package)
+    print("DEPENDENCIES: {}".format(dependencies))
 
     if not os.path.exists(package_name):
         os.makedirs(package_name)
